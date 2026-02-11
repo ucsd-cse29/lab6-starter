@@ -3,57 +3,61 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
-// 1. Struct
 typedef struct {
-    char *keyword;
     char *filename;
-} SearchJob;
+    char *keyword1;
+    char *keyword2;
+} DualSearchJob;
+
+// Helper function to print exit status
+void print_result(char *keyword, int status) {
+    if (WIFEXITED(status)) {
+        int code = WEXITSTATUS(status);
+        if (code == 0) printf("  [Result] '%s': FOUND\n", keyword);
+        else           printf("  [Result] '%s': NOT FOUND\n", keyword);
+    }
+}
 
 int main() {
-    // 2. Setup the job
-    SearchJob job;
-    job.keyword = ""; // TODO: keyword to search for
-    job.filename = ""; // TODO: path to rockyou
+    DualSearchJob job;
+    char *filename = ""; // TODO: path to rockyou
+    char *parent_keyword = "alpaca";
+    char *child_keyword = "hello";
 
-    printf("[Parent] Dispatching search for '%s'...\n", job.keyword);
+    printf("[Parent] Starting parallel search...\n");
 
-    pid_t pid = // TODO: make a child process
+    // --- LAUNCH CHILD 1 ---
+    pid_t pid1 = ; // TODO: create child1
 
-    if (pid < 0) {
-        perror("Child process creation failed");
-        return 1;
+    if (pid1 == 0) {
+        // TODO: exec with grep or mysearch for keyword1
+        exit(2); // Error if exec fails
     }
 
-    if (pid == 0) {
-        // --- CHILD PROCESS ---
-        // The child inherits the 'job' struct copy
-        
-        // TODO: exec grep or your own mysearch (which requires redirection)
-        
-        // Only runs if exec failed!
-        printf("Exec failed");
-        exit(2);
-    } 
-    else {
-        // --- PARENT PROCESS ---
-        int status;
-        
-        // TODO: Wait for child, but save the status of the child to status
+    // --- LAUNCH CHILD 2 ---
+    pid_t pid2 = ; // TODO: create child2
 
-        if (WIFEXITED(status)) {  // gets the actual important bits for checking status
-            // Get the actual integer exit code (0, 1, or 2)
-            int exit_code = WEXITSTATUS(status);
+    if (pid2 == 0) {
+        // TODO: exec with grep or mysearch for keyword2
+        exit(2); // Error if exec fails
+    }
 
-            if (exit_code == 0) {
-                printf("\n[Parent] Success: The keyword was FOUND.\n");
-            } else if (exit_code == 1) {
-                printf("\n[Parent] Failure: The keyword was NOT found.\n");
-            } else {
-                printf("\n[Parent] Error: grep encountered a problem.\n");
-            }
+    // --- PARENT WAITS ---
+    int status;
+    pid_t finished_pid;
+
+    // Loop exactly twice because we have 2 children
+    for (int i = 0; i < 2; i++) {
+        
+        // Block until ANY child finishes
+        finished_pid = wait(&status);
+
+        if (finished_pid == pid1) {
+            print_result(keyword1, status);
+        } else if (finished_pid == pid2) {
+            print_result(keyword2, status);
         }
     }
 
     return 0;
 }
-
